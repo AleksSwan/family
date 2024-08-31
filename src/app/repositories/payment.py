@@ -87,7 +87,7 @@ class PaymentRepository:
                 session=session, uid=data.uid
             )
             if existing_transaction:
-                return existing_transaction
+                self._raise_payment_error("Duplicate transaction")
 
             # Fetch the user
             user = await self._fetch_user(
@@ -95,8 +95,7 @@ class PaymentRepository:
                 user_id=user_id,
             )
             if not user:
-                msg = "User not found"
-                raise exceptions.PaymentError(msg)
+                self._raise_payment_error("User not found")
 
             self._update_balance(user=user, data=data)
 

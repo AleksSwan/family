@@ -476,14 +476,10 @@ async def test_add_transaction_duplicate_uid(
     )
 
     repo = PaymentRepository(db_session=db_session)
-    transaction = await repo.add_transaction(data=data)
 
-    assert transaction is not None
-    assert transaction.id is not None
-    assert transaction.user_id == transaction.user_id
-    assert transaction.type == transaction.type
-    assert transaction.amount == transaction.amount
-    assert transaction.created_at == transaction.created_at
+    with pytest.raises(exceptions.PaymentError, match="Duplicate transaction"):
+        await repo.add_transaction(data=data)
+
     db_session.assert_called_once()
     assert session_mock.execute.call_count == 1
     session_mock.add.assert_not_called()
