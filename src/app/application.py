@@ -42,7 +42,7 @@ class AppBuilder:
             yield session
 
     async def init_async_resources(self) -> None:
-        self._async_engine = create_async_engine(self.settings.db_dsn, echo=True)
+        self._async_engine = create_async_engine(self.settings.db_dsn, echo=False)
         self._session_maker = async_sessionmaker(
             bind=self._async_engine, class_=AsyncSessionType, expire_on_commit=False
         )
