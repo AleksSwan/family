@@ -7,7 +7,10 @@ from starlette import status
 from app import exceptions, models, schemas
 from app.api.base import get_payment_repo
 from app.repositories import PaymentRepository
+from app.settings import LoggerConfigurator
 
+
+logger = LoggerConfigurator(name="api-payments").configure()
 
 ROUTER: Final = fastapi.APIRouter()
 
@@ -54,6 +57,8 @@ async def add_transaction(
             data
         )
     except exceptions.PaymentError as e:
+        msg = f"uid={data.uid}; PaymentError: {e}"
+        logger.debug(msg)
         raise fastapi.HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
