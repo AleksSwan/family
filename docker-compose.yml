@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  application:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        - ENVIRONMENT=dev
+    restart: always
+    container_name: app-family
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        while ! nc -z postgres-family 5432; do
+          sleep 0.1
+        done &&
+        echo 'Database started' &&
+        alembic upgrade head &&
+        python src/app/__main__.py
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:14
+    restart: always
+    container_name: postgres-family
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      FAMILY_POSTGRES_DB: ${DB_NAME}
+      FAMILY_DB_USER: ${DB_USER}
+      FAMILY_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data_2:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 1s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres_data_2:
