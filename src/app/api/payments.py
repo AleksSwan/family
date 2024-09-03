@@ -10,7 +10,7 @@ from app.repositories import PaymentRepository
 from app.settings import LoggerConfigurator
 
 
-logger = LoggerConfigurator(name="api-payments").configure()
+logger = LoggerConfigurator(name="api-payments", log_file="payments.log").configure()
 
 ROUTER: Final = fastapi.APIRouter()
 
