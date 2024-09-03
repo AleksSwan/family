@@ -29,22 +29,36 @@ class AppBuilder:
         self.app.dependency_overrides[get_db] = self.get_async_session_maker
         include_routers(self.app)
 
-    async def get_async_session_maker(self) -> async_sessionmaker[AsyncSessionType]:
+    def get_async_session_maker(self) -> async_sessionmaker[AsyncSessionType]:
         return self._session_maker
 
-    def set_session_maker(
+    @property
+    def async_session_maker(self) -> async_sessionmaker[AsyncSessionType]:
+        return self._session_maker
+
+    @async_session_maker.setter
+    def async_session_maker(
         self, session_maker: async_sessionmaker[AsyncSessionType]
     ) -> None:
         self._session_maker = session_maker
 
+    @property
+    def async_engine(self) -> AsyncEngine:
+        return self._async_engine
+
+    @async_engine.setter
+    def async_engine(self, async_engine: AsyncEngine) -> None:
+        self._async_engine = async_engine
+
     async def get_session(self) -> typing.AsyncGenerator[AsyncSessionType, None]:
-        async with self._session_maker() as session:
+        async with self.async_session_maker() as session:
             yield session
 
     async def init_async_resources(self) -> None:
-        self._async_engine = create_async_engine(self.settings.db_dsn, echo=False)
-        self._session_maker = async_sessionmaker(
-            bind=self._async_engine, class_=AsyncSessionType, expire_on_commit=False
+        self.async_engine = create_async_engine(self.settings.db_dsn, echo=False)
+
+        self.async_session_maker = async_sessionmaker(
+            bind=self.async_engine, class_=AsyncSessionType, expire_on_commit=False
         )
 
     async def tear_down(self) -> None:
